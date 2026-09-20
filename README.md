@@ -29,7 +29,7 @@ node scripts/serve.mjs
 
 Build output goes to `Reentry/Build/`. Set `UNITY_EDITOR` to override the local Unity executable. Every Unity build runs the flight regression suite first. The native player accepts `--qa` to run a winning trajectory and capture title, entry, approach and debrief to `/tmp/ember-*.png`; QA never saves a best score. `--visual-qa` captures the entry/ground/final visual fixtures; `--landing-qa` captures the landing stages.
 
-GitHub Actions executes the same pure C# flight tests and Node bundle-validator regressions. Rendering and audio are also checked in actual Unity players and WebGL separately.
+GitHub Actions runs C# flight, landing and debrief regressions plus Node bundle and release packaging tests. Main builds and validates WebGL, then deploys to itch.io. Version tags build WebGL, Universal macOS, Windows x64 and Linux x64 packages and publish them to GitHub Releases with SHA-256 checksums. The tag must match `PlayerSettings.bundleVersion`; build scripts preserve that version. Rendering and audio are checked separately in actual Unity players and WebGL.
 
 ## Presentation
 

@@ -10,6 +10,13 @@ public static class BuildReentry {
  public static void Test(){FlightTests.Run();PresentationTests.Run();LandingTests.Run();DebriefTests.Run();AssetChecks.Run();}
  public static void Web(){Build(BuildTarget.WebGL,"Build/WebGL");}
  public static void Desktop(){EditorUserBuildSettings.SetPlatformSettings("OSXUniversal","Architecture","ARM64");Build(BuildTarget.StandaloneOSX,"Build/Ember.app");}
+ public static void MacOS(){
+  string previous=EditorUserBuildSettings.GetPlatformSettings("OSXUniversal","Architecture");
+  try{EditorUserBuildSettings.SetPlatformSettings("OSXUniversal","Architecture","x64ARM64");Build(BuildTarget.StandaloneOSX,"Build/macOS/Ember.app");}
+  finally{EditorUserBuildSettings.SetPlatformSettings("OSXUniversal","Architecture",previous);}
+ }
+ public static void Windows(){Build(BuildTarget.StandaloneWindows64,"Build/Windows/Ember.exe");}
+ public static void Linux(){Build(BuildTarget.StandaloneLinux64,"Build/Linux/Ember.x86_64");}
  static void Build(BuildTarget target,string output){
   FlightTests.Run();PresentationTests.Run();LandingTests.Run();DebriefTests.Run();AssetChecks.Run();
   if(!AssetDatabase.LoadAssetAtPath<TMP_FontAsset>("Assets/Resources/Fonts/BodySDF.asset")){
@@ -29,10 +36,12 @@ public static class BuildReentry {
    material.SetTexture("_BaseMap",Resources.Load<Texture2D>(kind+"Albedo"));material.SetTexture("_BumpMap",Resources.Load<Texture2D>(kind+"Normal"));material.EnableKeyword("_NORMALMAP");material.SetTexture("_MetallicGlossMap",Resources.Load<Texture2D>(kind+"Surface"));material.EnableKeyword("_METALLICSPECGLOSSMAP");material.SetFloat("_BumpScale",.45f);material.SetFloat("_Smoothness",1);material.SetFloat("_Metallic",kind=="Hull"?.02f:.01f);EditorUtility.SetDirty(material);
   }
   var scene=EditorSceneManager.NewScene(NewSceneSetup.EmptyScene,NewSceneMode.Single);new GameObject("EMBER - Flight Director").AddComponent<ReentryGame>();EditorSceneManager.SaveScene(scene,"Assets/Ember.unity");
-  PlayerSettings.productName="EMBER - Return to Earth";PlayerSettings.companyName="Steven Li";PlayerSettings.bundleVersion="1.0.0";PlayerSettings.colorSpace=ColorSpace.Linear;PlayerSettings.defaultScreenWidth=1440;PlayerSettings.defaultScreenHeight=900;PlayerSettings.fullScreenMode=FullScreenMode.Windowed;PlayerSettings.resizableWindow=true;PlayerSettings.runInBackground=true;
+  PlayerSettings.productName="EMBER - Return to Earth";PlayerSettings.companyName="Steven Li";PlayerSettings.colorSpace=ColorSpace.Linear;PlayerSettings.defaultScreenWidth=1440;PlayerSettings.defaultScreenHeight=900;PlayerSettings.fullScreenMode=FullScreenMode.Windowed;PlayerSettings.resizableWindow=true;PlayerSettings.runInBackground=true;
   PlayerSettings.WebGL.compressionFormat=WebGLCompressionFormat.Gzip;PlayerSettings.WebGL.decompressionFallback=true;PlayerSettings.WebGL.template="PROJECT:Reentry";
   PlayerSettings.SetUseDefaultGraphicsAPIs(BuildTarget.WebGL,false);PlayerSettings.SetGraphicsAPIs(BuildTarget.WebGL,new[]{GraphicsDeviceType.OpenGLES3});
   if(target!=BuildTarget.WebGL)PlayerSettings.SetScriptingBackend(UnityEditor.Build.NamedBuildTarget.Standalone,ScriptingImplementation.Mono2x);
+  System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(output));
+  Debug.Log($"Building {target}, version {PlayerSettings.bundleVersion}, output {output}");
   AssetDatabase.SaveAssets();var report=BuildPipeline.BuildPlayer(new[]{"Assets/Ember.unity"},output,target,BuildOptions.None);if(report.summary.result!=UnityEditor.Build.Reporting.BuildResult.Succeeded)throw new Exception("Build failed");Debug.Log("EMBER_BUILD_PASSED "+output);
  }
 }

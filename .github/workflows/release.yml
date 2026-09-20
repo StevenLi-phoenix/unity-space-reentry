@@ -1,0 +1,143 @@
+name: Release
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing version tag to build (must match PlayerSettings.bundleVersion)
+        required: true
+        type: string
+permissions:
+  contents: read
+concurrency:
+  group: ember-release-${{ github.event.inputs.tag || github.ref_name }}
+  cancel-in-progress: false
+env:
+  RELEASE_TAG: ${{ github.event.inputs.tag || github.ref_name }}
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.RELEASE_TAG }}
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify tag and project version
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse "refs/tags/$RELEASE_TAG^{commit}")" = "$(git rev-parse HEAD)"
+          node scripts/check-release-version.mjs "$RELEASE_TAG"
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - run: dotnet run --project tests/FlightChecks.csproj --configuration Release
+      - run: node --test scripts/*.test.mjs
+  build:
+    needs: validate
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: webgl
+            target: WebGL
+            module: webgl
+            method: BuildReentry.Web
+            directory: WebGL
+          - platform: macos
+            target: StandaloneOSX
+            module: mac-mono
+            method: BuildReentry.MacOS
+            directory: macOS
+          - platform: windows
+            target: StandaloneWindows64
+            module: windows-mono
+            method: BuildReentry.Windows
+            directory: Windows
+          - platform: linux
+            target: StandaloneLinux64
+            module: linux-il2cpp
+            method: BuildReentry.Linux
+            directory: Linux
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.RELEASE_TAG }}
+          persist-credentials: false
+      - name: Check Unity credentials
+        shell: bash
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          for name in UNITY_LICENSE UNITY_EMAIL UNITY_PASSWORD; do
+            test -n "${!name}" || { echo "::error::Missing repository secret: $name"; exit 1; }
+          done
+      - uses: actions/cache@v4
+        with:
+          path: Reentry/Library
+          key: release-${{ matrix.platform }}-${{ hashFiles('Reentry/ProjectSettings/ProjectVersion.txt', 'Reentry/Packages/packages-lock.json') }}-${{ github.sha }}
+          restore-keys: |
+            release-${{ matrix.platform }}-${{ hashFiles('Reentry/ProjectSettings/ProjectVersion.txt', 'Reentry/Packages/packages-lock.json') }}-
+      - uses: game-ci/unity-builder@v4
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        with:
+          projectPath: Reentry
+          unityVersion: 6000.6.0f1
+          customImage: unityci/editor:ubuntu-6000.6.0f1-${{ matrix.module }}-3
+          targetPlatform: ${{ matrix.target }}
+          buildMethod: ${{ matrix.method }}
+          versioning: None
+      - name: Package complete player
+        shell: bash
+        env:
+          PLATFORM: ${{ matrix.platform }}
+          BUILD_DIRECTORY: ${{ matrix.directory }}
+        run: |
+          set -euo pipefail
+          bash scripts/package-release.sh "$PLATFORM" "Reentry/Build/$BUILD_DIRECTORY" dist
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-${{ matrix.platform }}
+          path: dist/*
+          if-no-files-found: error
+          retention-days: 14
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: release-*
+          path: dist
+          merge-multiple: true
+      - name: Publish browser and desktop packages
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          test -s dist/Ember-WebGL.zip
+          test -s dist/Ember-macOS.tar.gz
+          test -s dist/Ember-Windows-x64.zip
+          test -s dist/Ember-Linux-x64.tar.gz
+          (cd dist && sha256sum Ember-* > SHA256SUMS.txt)
+          if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
+            gh release upload "$RELEASE_TAG" dist/* --clobber
+          else
+            gh release create "$RELEASE_TAG" dist/* --verify-tag --generate-notes --title "EMBER $RELEASE_TAG"
+          fi

@@ -13,7 +13,7 @@ The flight is intentionally time-compressed and tuned for play, rather than engi
 ## Source and assets
 
 - `Reentry/`: Unity 6000.6.0f1, URP 17.6.0, Input System, static TextMeshPro fonts.
-- `art/Ember.blend`: editable original Blender model: ceramic fuselage, delta wings, canopy, thermal tiles, twin engines and navigation lights.
+- `art/Ember.blend`: editable original Blender model: ceramic pressure shell, framed glazing, reinforced wing roots, RCC leading edges, hollow OMS bells, hinged elevons and articulated tricycle gear.
 - `art/build_assets.py`: reproducible Blender FBX export and model render.
 - `Reentry/Assets/Scripts/`: deterministic flight model, game flow, visuals, HUD and synthesized audio.
 
@@ -27,13 +27,13 @@ dotnet run --project tests/FlightChecks.csproj
 node scripts/serve.mjs
 ```
 
-Build output goes to `Reentry/Build/`. Set `UNITY_EDITOR` to override the local Unity executable. Every Unity build runs the flight regression suite first. The native player accepts `--qa` to run a winning trajectory and capture title, entry, approach and debrief to `/tmp/ember-*.png`; QA never saves a best score.
+Build output goes to `Reentry/Build/`. Set `UNITY_EDITOR` to override the local Unity executable. Every Unity build runs the flight regression suite first. The native player accepts `--qa` to run a winning trajectory and capture title, entry, approach and debrief to `/tmp/ember-*.png`; QA never saves a best score. `--visual-qa` captures the entry/ground/final visual fixtures; `--landing-qa` captures the landing stages.
 
 GitHub Actions executes the same pure C# flight tests and Node bundle-validator regressions. Rendering and audio are also checked in actual Unity players and WebGL separately.
 
 ## Presentation
 
-Volumetric leading-edge plasma, a permanent coastal landscape and an attitude/flight-path instrument make heating, altitude and motion readable. See [the visual audit](docs/VISUAL-AUDIT.md) for the fixes and verification approach.
+Volumetric leading-edge plasma, a permanent coastal landscape and an attitude/flight-path instrument make heating, altitude and motion readable. Altitude-aware reflections and separate surface smoothness maps distinguish ceramic, carbon, metal and glass. The accepted approach now continues through flare, main-wheel touchdown, nose lowering, tire spin-up, speedbrakes and a braking rollout to a complete stop. See [the visual audit](docs/VISUAL-AUDIT.md) for the earlier fixes and [airframe/landing notes](docs/AIRFRAME-LANDING.md) for this pass.
 
 ## Credits
 

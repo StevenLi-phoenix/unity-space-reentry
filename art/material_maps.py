@@ -17,4 +17,9 @@ def generate_maps(root):
   height=-seam*.13+noise*.1;gy,gx=np.gradient(height);normal=np.stack([-gx*2,-gy*2,np.ones((n,n))],axis=-1);normal/=np.linalg.norm(normal,axis=-1)[:,:,None]
   for suffix,pixels in [('Albedo',np.clip(rgb,0,1)),('Normal',normal*.5+.5)]:
    image=bpy.data.images.new(name+suffix,width=n,height=n,alpha=True);rgba=np.concatenate([pixels,np.ones((n,n,1))],axis=-1).astype(np.float32);image.pixels.foreach_set(rgba.ravel());image.filepath_raw=os.path.join(out,name+suffix+'.png');image.file_format='PNG';image.save()
+  # Smoothness is independent of color: weathered ceramic and satin carbon have
+  # softer reflections than the framed glazing and machined engine hardware.
+  smooth=np.clip((.38 if name=='Hull' else .22)+variation*.8-noise*2-seam*.14,.08,.52)
+  surface=np.ones((n,n,4),dtype=np.float32);surface[:,:,:3]=.02 if name=='Hull' else .01;surface[:,:,3]=smooth
+  image=bpy.data.images.new(name+'Surface',width=n,height=n,alpha=True);image.colorspace_settings.name='Non-Color';image.pixels.foreach_set(surface.ravel());image.filepath_raw=os.path.join(out,name+'Surface.png');image.file_format='PNG';image.save()
  print('PBR_MAPS_GENERATED hull/carbon albedo and normal')

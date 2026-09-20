@@ -4,7 +4,7 @@ using TMPro;
 public sealed class ReentryHud {
  public GameObject Menu,Flight,Debrief,PausePanel;public TextMeshProUGUI Status,Instruction,Result,Details,Best;
  public Button Launch,Retry,Next,PauseButton,Resume,Mute,Motion,Mission;
- TextMeshProUGUI telemetry,thermal,forecast,command,phase;Image heatBar,loadBar,predictionMarker,holdMarker,releaseMarker;Image destination;TextMeshProUGUI destinationText;TMP_FontAsset font;Transform root;CanvasScaler scaler;FlightPlot plot;AttitudeReference attitude;TextMeshProUGUI ground;
+ TextMeshProUGUI telemetry,thermal,forecast,command,phase;Image heatBar,loadBar,predictionMarker,holdMarker,releaseMarker;Image destination;TextMeshProUGUI destinationText;TMP_FontAsset font;Transform root;CanvasScaler scaler;FlightPlot plot;AttitudeReference attitude;TextMeshProUGUI ground,landingDistance;bool landingMode;readonly System.Collections.Generic.List<GameObject> flightOnly=new System.Collections.Generic.List<GameObject>();
  readonly Color ink=new Color(.82f,.89f,.91f),cyan=new Color(.3f,.85f,.95f),orange=new Color(1,.42f,.16f);
  public ReentryHud(){font=Resources.Load<TMP_FontAsset>("Fonts/BodySDF");var canvas=new GameObject("Flight deck").AddComponent<Canvas>();canvas.renderMode=RenderMode.ScreenSpaceOverlay;canvas.gameObject.AddComponent<GraphicRaycaster>();scaler=canvas.gameObject.AddComponent<CanvasScaler>();scaler.uiScaleMode=CanvasScaler.ScaleMode.ScaleWithScreenSize;scaler.referenceResolution=new Vector2(1440,900);root=canvas.transform;
   Label(root,"E M B E R",40,25,350,45,27,Color.white);Label(root,"O R B I T A L   R E C O V E R Y",40,73,450,22,12,cyan);
@@ -26,12 +26,23 @@ public sealed class ReentryHud {
   PauseButton=Button(Flight.transform,"PAUSE",1230,805,160,40);
   Debrief=Group("Debrief");Panel(Debrief.transform,0,110,1440,730,new Color(.008f,.015f,.025f,.94f));Label(Debrief.transform,"FLIGHT RECORDER",70,158,800,40,17,cyan);Result=Label(Debrief.transform,"",70,235,1290,100,65,Color.white);Details=Label(Debrief.transform,"",70,385,1270,270,27,ink);Retry=Button(Debrief.transform,"TRY AGAIN",70,740,260,60);Next=Button(Debrief.transform,"NEXT ROUTE",355,740,270,60);
   PausePanel=Group("Paused");Panel(PausePanel.transform,0,100,1440,740,new Color(.008f,.015f,.025f,.97f));Label(PausePanel.transform,"FLIGHT PAUSED",430,310,730,90,53,Color.white);Resume=Button(PausePanel.transform,"RESUME",500,475,440,65);
+  foreach(Transform child in Flight.transform){var r=child as RectTransform;float x=r.anchoredPosition.x,y=-r.anchoredPosition.y;if((x>=425&&x<1200&&y>=710&&y<850)||(x>=900&&y>=100&&y<300)||(x<400&&y>=270&&y<=400))flightOnly.Add(child.gameObject);}
+  flightOnly.Add(releaseMarker.gameObject);
+  landingDistance=Label(Flight.transform,"",425,750,710,40,20,cyan);landingDistance.alignment=TextAlignmentOptions.Center;landingDistance.gameObject.SetActive(false);
   Mute=Button(root,"SOUND ON",1060,855,160,30);Motion=Button(root,"MOTION ON",1230,855,170,30);Flight.SetActive(false);Debrief.SetActive(false);PausePanel.SetActive(false);
  }
  public void SetDestination(Vector3 viewport,float range,float altitude){destination.gameObject.SetActive(Flight.activeSelf&&FlightPresentation.VisibleDestination(altitude,range)&&viewport.z>0&&viewport.x>.03f&&viewport.x<.97f&&viewport.y>.1f&&viewport.y<.9f);destination.rectTransform.anchorMin=destination.rectTransform.anchorMax=new Vector2(viewport.x,viewport.y);destination.rectTransform.anchoredPosition=Vector2.zero;destinationText.text=$"ASTER / {range:0.0} km";}
- public void UpdateAutoland(float altitude,float range,float progress){telemetry.text=$"{altitude*1000:0} <size=18>m ALTITUDE</size>\n<size=24>AUTOLAND ENGAGED</size>";phase.text="AUTOLAND / TIME COMPRESSED";command.text=progress>.96f?"TOUCHDOWN":"AUTOMATIC FINAL APPROACH";Instruction.text="Approach captured. Landing system has control.";forecast.text="RUNWAY ACQUIRED";ground.text=$"GROUND  {altitude*1000:0} m BELOW";Status.text="SAFE APPROACH CAPTURED";}
+ public void UpdateAutoland(float altitude,float range,LandingFrame landing){
+  if(!landingMode){landingMode=true;foreach(var g in flightOnly)g.SetActive(false);landingDistance.gameObject.SetActive(true);}
+  attitude.Pitch=landing.Pitch;attitude.Gamma=0;attitude.SetVerticesDirty();
+  bool rolling=landing.Stage>=LandingStage.Touchdown;telemetry.text=$"{Mathf.Max(0,altitude*1000-3.24f):0} <size=18>m CLEARANCE</size>\n{landing.Speed:0} <size=18>m/s GROUND SPEED</size>";
+  phase.text=landing.Stage==LandingStage.Stopped?"RECOVERY COMPLETE":rolling?"ROLLOUT / 3x TIME":"AUTOLAND / 6x TIME";
+  command.text=landing.Stage==LandingStage.Stopped?"FULL STOP / WELCOME HOME":landing.Stage==LandingStage.Rollout?"WHEEL BRAKING":landing.Stage==LandingStage.Touchdown?"MAIN GEAR DOWN / NOSE LOWERING":landing.Stage==LandingStage.Flare?"FLARE / HOLDING THE NOSE":"AUTOMATIC FINAL APPROACH";
+  Instruction.text=landing.Stage==LandingStage.Stopped?"Wheel brakes set. Vehicle secured.":rolling?"Speedbrakes deployed. Braking to a complete stop.":"Approach captured. Landing system has control.";forecast.text=rolling?"RUNWAY REMAINING  "+Mathf.Max(0,(range+1.25f)*1000).ToString("0")+" M":"RUNWAY ACQUIRED";landingDistance.text=forecast.text;ground.text=rolling?"WEIGHT ON WHEELS":$"GROUND  {altitude*1000:0} m BELOW";Status.text=landing.Stage==LandingStage.Stopped?"RECOVERY COMPLETE":"SAFE APPROACH CAPTURED";
+ }
+
  public void TickLayout(){scaler.matchWidthOrHeight=(float)Screen.width/Screen.height<1.6f?0:1;}
- public void ResetPlot(){plot.ResetTrack();}
+ public void ResetPlot(){plot.ResetTrack();landingMode=false;foreach(var g in flightOnly)g.SetActive(true);landingDistance.gameObject.SetActive(false);}
  public void UpdateFlight(FlightModel f,bool held,double low,double high,double current){
   telemetry.text=$"{f.Altitude:0.0} <size=18>km ALTITUDE</size>\n{f.Velocity:0} <size=18>m/s AIRSPEED</size>";
   thermal.text=$"SHIELD  {f.Temperature:0} K / 2200 K\nLOAD     {f.DynamicPressure/1000:0.0} kPa / 100 kPa";heatBar.rectTransform.sizeDelta=new Vector2(270*Mathf.Clamp01(f.Heat),4);loadBar.rectTransform.sizeDelta=new Vector2(270*Mathf.Clamp01((float)f.DynamicPressure/100000),4);

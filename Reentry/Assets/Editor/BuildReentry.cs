@@ -7,11 +7,11 @@ using UnityEngine.Rendering.Universal;
 using TMPro;
 using UnityEngine.TextCore.LowLevel;
 public static class BuildReentry {
- public static void Test(){FlightTests.Run();PresentationTests.Run();LandingTests.Run();AssetChecks.Run();}
+ public static void Test(){FlightTests.Run();PresentationTests.Run();LandingTests.Run();DebriefTests.Run();AssetChecks.Run();}
  public static void Web(){Build(BuildTarget.WebGL,"Build/WebGL");}
  public static void Desktop(){EditorUserBuildSettings.SetPlatformSettings("OSXUniversal","Architecture","ARM64");Build(BuildTarget.StandaloneOSX,"Build/Ember.app");}
  static void Build(BuildTarget target,string output){
-  FlightTests.Run();PresentationTests.Run();LandingTests.Run();AssetChecks.Run();
+  FlightTests.Run();PresentationTests.Run();LandingTests.Run();DebriefTests.Run();AssetChecks.Run();
   if(!AssetDatabase.LoadAssetAtPath<TMP_FontAsset>("Assets/Resources/Fonts/BodySDF.asset")){
    var f=TMP_FontAsset.CreateFontAsset(AssetDatabase.LoadAssetAtPath<Font>("Assets/Resources/Fonts/Body.ttf"),64,8,GlyphRenderMode.SDFAA,1024,1024,AtlasPopulationMode.Dynamic,true);
    string chars="";for(int i=32;i<127;i++)chars+=(char)i;f.TryAddCharacters(chars,out _);f.atlasPopulationMode=AtlasPopulationMode.Static;AssetDatabase.CreateAsset(f,"Assets/Resources/Fonts/BodySDF.asset");foreach(var t in f.atlasTextures)AssetDatabase.AddObjectToAsset(t,f);AssetDatabase.AddObjectToAsset(f.material,f);

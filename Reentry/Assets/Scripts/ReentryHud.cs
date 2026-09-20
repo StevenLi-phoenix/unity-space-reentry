@@ -2,7 +2,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 public sealed class ReentryHud {
- public GameObject Menu,Flight,Debrief,PausePanel;public TextMeshProUGUI Status,Instruction,Result,Details,Best;
+ public GameObject Menu,Flight,Debrief,PausePanel;SuccessDebrief successDebrief;readonly System.Collections.Generic.List<GameObject> failureDebrief=new System.Collections.Generic.List<GameObject>();public TextMeshProUGUI Status,Instruction,Result,Details,Best;
  public Button Launch,Retry,Next,PauseButton,Resume,Mute,Motion,Mission;
  TextMeshProUGUI telemetry,thermal,forecast,command,phase;Image heatBar,loadBar,predictionMarker,holdMarker,releaseMarker;Image destination;TextMeshProUGUI destinationText;TMP_FontAsset font;Transform root;CanvasScaler scaler;FlightPlot plot;AttitudeReference attitude;TextMeshProUGUI ground,landingDistance;bool landingMode;readonly System.Collections.Generic.List<GameObject> flightOnly=new System.Collections.Generic.List<GameObject>();
  readonly Color ink=new Color(.82f,.89f,.91f),cyan=new Color(.3f,.85f,.95f),orange=new Color(1,.42f,.16f);
@@ -25,6 +25,7 @@ public sealed class ReentryHud {
   destination=Panel(Flight.transform,0,0,9,9,cyan);destinationText=Label(destination.transform,"ASTER",15,-8,230,35,15,cyan);
   PauseButton=Button(Flight.transform,"PAUSE",1230,805,160,40);
   Debrief=Group("Debrief");Panel(Debrief.transform,0,110,1440,730,new Color(.008f,.015f,.025f,.94f));Label(Debrief.transform,"FLIGHT RECORDER",70,158,800,40,17,cyan);Result=Label(Debrief.transform,"",70,235,1290,100,65,Color.white);Details=Label(Debrief.transform,"",70,385,1270,270,27,ink);Retry=Button(Debrief.transform,"TRY AGAIN",70,740,260,60);Next=Button(Debrief.transform,"NEXT ROUTE",355,740,270,60);
+  foreach(Transform child in Debrief.transform)if(child.gameObject!=Retry.gameObject&&child.gameObject!=Next.gameObject)failureDebrief.Add(child.gameObject);successDebrief=new SuccessDebrief(Debrief.transform,font);Retry.transform.SetAsLastSibling();Next.transform.SetAsLastSibling();
   PausePanel=Group("Paused");Panel(PausePanel.transform,0,100,1440,740,new Color(.008f,.015f,.025f,.97f));Label(PausePanel.transform,"FLIGHT PAUSED",430,310,730,90,53,Color.white);Resume=Button(PausePanel.transform,"RESUME",500,475,440,65);
   foreach(Transform child in Flight.transform){var r=child as RectTransform;float x=r.anchoredPosition.x,y=-r.anchoredPosition.y;if((x>=425&&x<1200&&y>=710&&y<850)||(x>=900&&y>=100&&y<300)||(x<400&&y>=270&&y<=400))flightOnly.Add(child.gameObject);}
   flightOnly.Add(releaseMarker.gameObject);
@@ -41,6 +42,9 @@ public sealed class ReentryHud {
   Instruction.text=landing.Stage==LandingStage.Stopped?"Wheel brakes set. Vehicle secured.":rolling?"Speedbrakes deployed. Braking to a complete stop.":"Approach captured. Landing system has control.";forecast.text=rolling?"RUNWAY REMAINING  "+Mathf.Max(0,(range+1.25f)*1000).ToString("0")+" M":"RUNWAY ACQUIRED";landingDistance.text=forecast.text;ground.text=rolling?"WEIGHT ON WHEELS":$"GROUND  {altitude*1000:0} m BELOW";Status.text=landing.Stage==LandingStage.Stopped?"RECOVERY COMPLETE":"SAFE APPROACH CAPTURED";
  }
 
+ public void ShowDebrief(FlightModel flight,bool best,bool reduced){bool success=flight.Outcome==FlightOutcome.Landed;foreach(var g in failureDebrief)g.SetActive(!success);successDebrief.Root.SetActive(success);Flight.SetActive(false);Debrief.SetActive(true);if(success)successDebrief.Show(flight,best,reduced);foreach(var b in new[]{Retry,Next}){b.transform.SetParent(success?successDebrief.Root.transform:Debrief.transform,false);b.transform.SetAsLastSibling();}Caption(Retry,success?"Fly again":"TRY AGAIN");Caption(Next,success?"Next route":"NEXT ROUTE");foreach(var b in new[]{Retry,Next}){var c=b.colors;c.normalColor=Color.white;b.colors=c;b.GetComponent<Image>().color=success?(b==Next?new Color(1,.84f,.51f):new Color(.13f,.27f,.33f)):new Color(.05f,.12f,.16f,.97f);b.GetComponentInChildren<TextMeshProUGUI>().color=success&&b==Next?new Color(.06f,.15f,.19f):ink;}Canvas.ForceUpdateCanvases();foreach(var button in new[]{Retry,Next})button.GetComponentInChildren<TextMeshProUGUI>().ForceMeshUpdate();}
+ public void LogDebrief(){foreach(var b in new[]{Retry,Next}){var t=b.GetComponentInChildren<TextMeshProUGUI>();Debug.Log("DEBRIEF_CONTROL "+t.text+" active="+t.isActiveAndEnabled+" vertices="+t.mesh.vertexCount+" culled="+t.canvasRenderer.cull+" alpha="+t.canvasRenderer.GetAlpha()+" color="+t.color);}}
+ public void TickDebrief(float dt,bool reduced){if(Debrief.activeSelf)successDebrief.Tick(dt,reduced);}
  public void TickLayout(){scaler.matchWidthOrHeight=(float)Screen.width/Screen.height<1.6f?0:1;}
  public void ResetPlot(){plot.ResetTrack();landingMode=false;foreach(var g in flightOnly)g.SetActive(true);landingDistance.gameObject.SetActive(false);}
  public void UpdateFlight(FlightModel f,bool held,double low,double high,double current){

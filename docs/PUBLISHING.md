@@ -27,3 +27,5 @@ GitHub Releases contain complete players, not lone executables. macOS is an inde
 Configure `UNITY_LICENSE`, `UNITY_EMAIL`, `UNITY_PASSWORD`, and `BUTLER_API_KEY` in this repository's Actions secrets. Pipe credential values from their existing private files directly to `gh secret set`; never put values in source, command output, documentation or chat. GitHub secrets cannot be read back from another repository.
 
 No persistent self-hosted runner is used. No credentials or runtime network service are bundled into the game.
+
+Unity 6000.6 WebGL twice exited 137 immediately after restoring the full Library on a fresh GitHub runner. Cold builds succeeded. Workflows intentionally do not cache Library across runners; reintroduce a narrowly scoped cache only after verifying a second cloud build with restored contents.

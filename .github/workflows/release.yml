@@ -81,12 +81,8 @@ jobs:
           for name in UNITY_LICENSE UNITY_EMAIL UNITY_PASSWORD; do
             test -n "${!name}" || { echo "::error::Missing repository secret: $name"; exit 1; }
           done
-      - uses: actions/cache@v4
-        with:
-          path: Reentry/Library
-          key: release-${{ matrix.platform }}-${{ hashFiles('Reentry/ProjectSettings/ProjectVersion.txt', 'Reentry/Packages/packages-lock.json') }}-${{ github.sha }}
-          restore-keys: |
-            release-${{ matrix.platform }}-${{ hashFiles('Reentry/ProjectSettings/ProjectVersion.txt', 'Reentry/Packages/packages-lock.json') }}-
+      # Unity 6000.6 WebGL exits 137 when restoring Library across hosted runners.
+      # Import from source for a reproducible build; do not restore the whole Library.
       - uses: game-ci/unity-builder@v4
         env:
           UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}

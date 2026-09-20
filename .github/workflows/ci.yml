@@ -1,0 +1,17 @@
+name: Game checks
+on: [push, pull_request, workflow_dispatch]
+permissions:
+  contents: read
+jobs:
+  regression:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: dotnet run --project tests/FlightChecks.csproj --configuration Release
+      - run: node --test scripts/*.test.mjs

@@ -8,7 +8,7 @@ case "$platform" in
   macos)
     test -s "$source_root/Ember.app/Contents/Info.plist"
     test -s "$source_root/Ember.app/Contents/MacOS/EMBER - Return to Earth"
-    chmod +x "$source_root/Ember.app/Contents/MacOS/EMBER - Return to Earth"
+    test -x "$source_root/Ember.app/Contents/MacOS/EMBER - Return to Earth"
     COPYFILE_DISABLE=1 tar -czf "$archive_root/Ember-macOS.tar.gz" -C "$source_root" 'Ember.app'
     ;;
   windows)
@@ -21,7 +21,7 @@ case "$platform" in
     test -s "$source_root/Ember.x86_64"
     test -s "$source_root/UnityPlayer.so"
     test -d "$source_root/Ember_Data"
-    chmod +x "$source_root/Ember.x86_64"
+    test -x "$source_root/Ember.x86_64"
     tar -czf "$archive_root/Ember-Linux-x64.tar.gz" -C "$source_root" .
     ;;
   webgl)

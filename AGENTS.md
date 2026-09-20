@@ -23,3 +23,5 @@ Successful debrief: SuccessDebrief owns the brighter welcome-home layout, a shor
 Keep the success controls under the celebration canvas, and stop updating hidden flight instruments during debrief. Inspect small text at full resolution when checking screenshots.
 
 Publishing: GitHub StevenLi-phoenix/unity-space-reentry. Main runs C# and Node regression checks, builds WebGL with GameCI, validates the bundle and publishes ember-reentry:html5. Version tags run all checks and build WebGL, Universal macOS, Windows x64 and Linux x64 players for GitHub Releases with SHA256SUMS. PlayerSettings.bundleVersion is the version source; never hardcode it in BuildReentry. Desktop remains ARM64 local QA; MacOS is the Universal release. scripts/package-release.sh validates complete players and preserves executable permissions. Repository secrets: UNITY_LICENSE, UNITY_EMAIL, UNITY_PASSWORD, BUTLER_API_KEY. Never log values.
+
+GameCI outputs are root-owned on the hosted runner. Packaging must read and validate execute bits, never chmod the source files as the runner user. macOS binary is named by productName (EMBER - Return to Earth), not the app directory name.

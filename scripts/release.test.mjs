@@ -31,7 +31,7 @@ test('Windows archive includes executable and runtime data',()=>fixture(async di
 }));
 test('Linux archive contains executable and player data',()=>fixture(async dir=>{
   const root=path.join(dir,'linux');await mkdir(path.join(root,'Ember_Data'),{recursive:true});
-  await writeFile(path.join(root,'Ember.x86_64'),'elf');await writeFile(path.join(root,'UnityPlayer.so'),'so');
+  await writeFile(path.join(root,'Ember.x86_64'),'elf');await chmod(path.join(root,'Ember.x86_64'),0o755);await writeFile(path.join(root,'UnityPlayer.so'),'so');
   const r=spawnSync('bash',[script,'linux',root,path.join(dir,'dist')]);assert.equal(r.status,0,r.stderr?.toString());
   const listing=spawnSync('tar',['-tvf',path.join(dir,'dist/Ember-Linux-x64.tar.gz')],{encoding:'utf8'});
   assert.match(listing.stdout,/-rwxr-xr-x.*Ember.x86_64/);assert.match(listing.stdout,/UnityPlayer.so/);
@@ -52,4 +52,10 @@ test('WebGL archive has index at root and rejects invalid bundles',()=>fixture(a
  const out=path.join(dir,'dist');assert.equal(spawnSync('bash',[script,'webgl',root,out]).status,0);
  const listing=spawnSync('unzip',['-Z1',path.join(out,'Ember-WebGL.zip')],{encoding:'utf8'}).stdout;assert.match(listing,/^index.html$/m);assert.match(listing,/^Build\/game.wasm.unityweb$/m);
  await rm(path.join(root,'Build/game.wasm.unityweb'));assert.notEqual(spawnSync('bash',[script,'webgl',root,out]).status,0);
+}));
+
+test('Unix packaging rejects players without execute permission',()=>fixture(async dir=>{
+ const root=path.join(dir,'linux');await mkdir(path.join(root,'Ember_Data'),{recursive:true});
+ await writeFile(path.join(root,'Ember.x86_64'),'elf');await chmod(path.join(root,'Ember.x86_64'),0o644);await writeFile(path.join(root,'UnityPlayer.so'),'so');
+ assert.notEqual(spawnSync('bash',[script,'linux',root,path.join(dir,'dist')]).status,0);
 }));

@@ -1,0 +1,33 @@
+{
+  "version": "1.1.2",
+  "commit": "94e9dc589634744a0d1618aca2c7a9fa8322200a",
+  "publicPage": "https://stevenli-phoenix-work.itch.io/ember-reentry",
+  "gameUrl": "https://html-classic.itch.zone/html/19326974-1998816/index.html?v=1789941815",
+  "note": "itch.io serves decompressed Unity resources; decoded payloads exactly match the CI artifact.",
+  "resources": [
+    {
+      "asset": "Build/WebGL.loader.js",
+      "servedBytes": 48779,
+      "payloadBytes": 48779,
+      "sha256": "5a40f8c8d93f36d8f23572e60bf37396755dbd65391d8f39c6cb7b96d256f88a"
+    },
+    {
+      "asset": "Build/WebGL.data.unityweb",
+      "servedBytes": 18378401,
+      "payloadBytes": 18378401,
+      "sha256": "40315f96edd864304a890908761f31b977a375b029f1da725bf8e1f5a94631b1"
+    },
+    {
+      "asset": "Build/WebGL.framework.js.unityweb",
+      "servedBytes": 331354,
+      "payloadBytes": 331354,
+      "sha256": "903925ccba5746a10008805c6dfecfdd8414fbaf49346e2e825f18b265d1126a"
+    },
+    {
+      "asset": "Build/WebGL.wasm.unityweb",
+      "servedBytes": 36571746,
+      "payloadBytes": 36571746,
+      "sha256": "53a9a5ee6bd6bfa4e7101bac5ce2d737416de7ed6c1d1a305b73290ba6b52151"
+    }
+  ]
+}

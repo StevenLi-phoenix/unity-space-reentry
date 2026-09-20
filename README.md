@@ -4,7 +4,9 @@
 
 A complete one-button orbital recovery game, built with Unity 6 and an original Blender lifting-body spacecraft.
 
-Browser build: `Reentry/Build/WebGL` (serve locally with the command below). The itch.io page is currently a draft.
+**[Play in your browser](https://stevenli-phoenix-work.itch.io/ember-reentry)** · **[Desktop releases](https://github.com/StevenLi-phoenix/unity-space-reentry/releases)**
+
+Local browser builds are written to `Reentry/Build/WebGL`. See [publishing instructions](docs/PUBLISHING.md) for the automated release workflow.
 
 Hold **Space, mouse or touch** to raise the nose and brake. Release to lower the nose and descend. Reach the 500m autoland capture gate within 2km of the predicted touchdown point, below 180m/s and 35m/s descent. Excess heat, excess landing energy, undershooting and overshooting have distinct outcomes. Three missions offer different destination ranges and lighting. Escape pauses; sound and camera motion can be disabled.
 

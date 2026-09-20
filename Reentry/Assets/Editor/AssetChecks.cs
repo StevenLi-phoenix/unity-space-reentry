@@ -3,7 +3,11 @@ using UnityEditor;
 using UnityEngine;
 public static class AssetChecks {
  public static void Run(){
-  var sheath=ReentryWorld.PlasmaMesh();if(sheath.vertexCount!=3185||sheath.triangles.Length!=18432)throw new Exception("Plasma topology changed unexpectedly");foreach(var v in sheath.vertices)if(float.IsNaN(v.x)||float.IsInfinity(v.z))throw new Exception("Nonfinite plasma mesh");if(sheath.bounds.size.z<22||sheath.bounds.size.x<9)throw new Exception("Plasma must be a broad continuous envelope");UnityEngine.Object.DestroyImmediate(sheath);
+  var sky=new Material(Shader.Find("Ember/Sky"));if(!sky.HasProperty("_AltitudeKm")||!sky.HasProperty("_Horizon"))throw new Exception("Atmosphere must expose material altitude/horizon parameters");UnityEngine.Object.DestroyImmediate(sky);
+  var plasma=new Material(Shader.Find("Ember/Plasma"));if(!plasma.HasProperty("_FlowTime"))throw new Exception("Plasma must expose pauseable animation time");UnityEngine.Object.DestroyImmediate(plasma);
+  var volume=ReentryPlasma.VolumeMesh();if(volume.bounds.size.z<30||volume.triangles.Length!=36)throw new Exception("Plasma volume must be closed and include full wake");UnityEngine.Object.DestroyImmediate(volume);
+  var terrain=CoastalTerrain.Build();if(terrain.bounds.size.x<400||terrain.vertexCount<30000)throw new Exception("Insufficient permanent ground coverage");foreach(var v in terrain.vertices)if(float.IsNaN(v.y))throw new Exception("Invalid terrain");UnityEngine.Object.DestroyImmediate(terrain);
+  foreach(bool up in new[]{false,true})foreach(float value in ReentryAudio.CommandSamples(up))if(float.IsNaN(value)||Math.Abs(value)>.1f)throw new Exception("Servo sound headroom");
   foreach(string map in new[]{"HullAlbedo","HullNormal","CarbonAlbedo","CarbonNormal"}){var tex=Resources.Load<Texture2D>(map);if(!tex||tex.width<1024)throw new Exception("Missing detailed surface map "+map);}
   var prefab=AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Resources/Ember.fbx");if(!prefab)throw new Exception("Missing spacecraft");
   var root=UnityEngine.Object.Instantiate(prefab);Transform nose=null,tail=null;foreach(var t in root.GetComponentsInChildren<Transform>()){if(t.name=="NoseAxis")nose=t;if(t.name=="TailAxis")tail=t;}

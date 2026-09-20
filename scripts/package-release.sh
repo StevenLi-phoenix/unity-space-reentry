@@ -7,8 +7,8 @@ archive_root="$(cd "$3" && pwd)"
 case "$platform" in
   macos)
     test -s "$source_root/Ember.app/Contents/Info.plist"
-    test -s "$source_root/Ember.app/Contents/MacOS/Ember"
-    chmod +x "$source_root/Ember.app/Contents/MacOS/Ember"
+    test -s "$source_root/Ember.app/Contents/MacOS/EMBER - Return to Earth"
+    chmod +x "$source_root/Ember.app/Contents/MacOS/EMBER - Return to Earth"
     COPYFILE_DISABLE=1 tar -czf "$archive_root/Ember-macOS.tar.gz" -C "$source_root" 'Ember.app'
     ;;
   windows)

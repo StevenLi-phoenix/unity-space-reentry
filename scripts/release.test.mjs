@@ -15,11 +15,11 @@ test('release tag must match serialized player version',()=>fixture(async dir=>{
 }));
 test('macOS archive preserves app executable permissions',()=>fixture(async dir=>{
   const root=path.join(dir,'macos');await mkdir(path.join(root,'Ember.app/Contents/MacOS'),{recursive:true});
-  const binary=path.join(root,'Ember.app/Contents/MacOS/Ember');await writeFile(binary,'app');await chmod(binary,0o755);
+  const binary=path.join(root,'Ember.app/Contents/MacOS/EMBER - Return to Earth');await writeFile(binary,'app');await chmod(binary,0o755);
   await writeFile(path.join(root,'Ember.app/Contents/Info.plist'),'plist');
   const r=spawnSync('bash',[script,'macos',root,path.join(dir,'dist')]);assert.equal(r.status,0,r.stderr?.toString());
   const tar=path.join(dir,'dist/Ember-macOS.tar.gz');
-  const listing=spawnSync('tar',['-tvf',tar],{encoding:'utf8'});assert.match(listing.stdout,/-rwxr-xr-x.*Ember.app\/Contents\/MacOS\/Ember/);
+  const listing=spawnSync('tar',['-tvf',tar],{encoding:'utf8'});assert.match(listing.stdout,/-rwxr-xr-x.*Ember.app\/Contents\/MacOS\/EMBER - Return to Earth/);
 }));
 test('Windows archive includes executable and runtime data',()=>fixture(async dir=>{
   const root=path.join(dir,'windows');await mkdir(path.join(root,'Ember_Data'),{recursive:true});
